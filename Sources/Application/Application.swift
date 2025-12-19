@@ -20,7 +20,8 @@ func callback(_ pointer: UnsafeMutableRawPointer?) {
 
 nonisolated(unsafe) var value: Float = 0 {
     didSet {
-        Document.global.getElementById(id: JSString("counter")).innerHTML = JSString(value)
+        let element = Document.global.getElementById(id: JSString("counter"))
+        element.innerHTML = JSString(value)
     }
 }
 
