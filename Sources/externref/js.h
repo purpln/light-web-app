@@ -41,10 +41,18 @@ __externref_t callbackJS(void (callback)(void *), void *data) WASM_IMPORT("js", 
 
 __externref_t stringifyJS(__externref_t self) WASM_IMPORT("js", "stringify");
 
-__externref_t getDocumentJS(void) WASM_IMPORT("js", "getDocument");
+__externref_t getDocumentJS(void) WASM_IMPORT("document", "getDocument");
 
 __externref_t getElementByIdJS(__externref_t id) WASM_IMPORT("document", "getElementById");
 __externref_t createElementJS(__externref_t name) WASM_IMPORT("document", "createElement");
+__externref_t getContextJS(__externref_t self, __externref_t name) WASM_IMPORT("document", "getContext");
 void appendChildJS(__externref_t self, __externref_t child) WASM_IMPORT("document", "appendChild");
 void addEventListenerJS(__externref_t self, __externref_t name, __externref_t callback) WASM_IMPORT("document", "addEventListener");
+void fillRectJS(__externref_t self, long x, long y, long width, long height) WASM_IMPORT("document", "fillRect");
+
+void beginPathJS(__externref_t self) WASM_IMPORT("document", "beginPath");
+void closePathJS(__externref_t self) WASM_IMPORT("document", "closePath");
+void moveToJS(__externref_t self, long x, long y) WASM_IMPORT("document", "moveTo");
+void lineToJS(__externref_t self, long x, long y) WASM_IMPORT("document", "lineTo");
+void strokeJS(__externref_t self) WASM_IMPORT("document", "stroke");
 #endif

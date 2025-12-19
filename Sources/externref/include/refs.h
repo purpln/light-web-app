@@ -47,8 +47,16 @@ ExternRefIndex stringify(ExternRefIndex self);
 ExternRefIndex getDocument(void);
 ExternRefIndex getElementById(ExternRefIndex id);
 ExternRefIndex createElement(ExternRefIndex name);
+ExternRefIndex getContext(ExternRefIndex self, ExternRefIndex name);
 void appendChild(ExternRefIndex self, ExternRefIndex child);
 void addEventListener(ExternRefIndex self, ExternRefIndex name, ExternRefIndex callback);
+void fillRect(ExternRefIndex self, long x, long y, long width, long height);
+
+void beginPath(ExternRefIndex self);
+void closePath(ExternRefIndex self);
+void moveTo(ExternRefIndex self, long x, long y);
+void lineTo(ExternRefIndex self, long x, long y);
+void stroke(ExternRefIndex self);
 
 #ifdef __cplusplus
 }

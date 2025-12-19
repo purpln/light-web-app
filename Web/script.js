@@ -34,7 +34,6 @@ function puts(address) {
 }
 
 function indirect(index, address, parameters) {
-    console.log(parameters);
     instance.exports.__indirect_function_table.get(index)(address);
 }
 
@@ -49,13 +48,20 @@ const imports = {
         setProperty: (self, name, value) => { self[name] = value; },
         stringify: (self) => JSON.stringify(self),
         callback: (index, address) => (...parameters) => indirect(index, address, parameters),
-        getDocument: () => document,
     },
     document: {
+        getDocument: () => document,
         getElementById: (id) => document.getElementById(id),
         createElement: (name) => document.createElement(name),
+        getContext: (element, name) => element.getContext(name),
         appendChild: (element, child) => element.appendChild(child),
         addEventListener: (element, name, callback) => element.addEventListener(name, callback),
+        fillRect: (element, x, y, width, height) => element.fillRect(x, y, width, height),
+        beginPath: (element) => element.beginPath(),
+        closePath: (element) => element.closePath(),
+        moveTo: (element, x, y) => element.moveTo(x, y),
+        lineTo: (element, x, y) => element.lineTo(x, y),
+        stroke: (element) => element.stroke(),
     },
     env: {
         puts: (address) => puts(address),

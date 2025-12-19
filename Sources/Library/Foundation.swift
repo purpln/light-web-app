@@ -13,38 +13,38 @@ var length: Int = 0
 @_cdecl("putchar")
 public func putchar(_ c: CInt) -> CInt {
     // Handle newline, null terminator, or buffer full
-    if unsafe c == 10 || c == 0 || length >= BUFFER_SIZE - 1 {
+    if c == 10 || c == 0 || length >= BUFFER_SIZE - 1 {
         // Ensure null termination
-        if unsafe length < BUFFER_SIZE {
-            unsafe letters[length] = 0
+        if length < BUFFER_SIZE {
+            letters[length] = 0
         } else {
-            unsafe letters[BUFFER_SIZE - 1] = 0
+            letters[BUFFER_SIZE - 1] = 0
         }
         
-        _ = unsafe puts(letters)
-        unsafe length = 0
+        _ = puts(letters)
+        length = 0
         
         // If it was a regular character that filled the buffer,
         // we still need to handle the current character
-        if unsafe c != 10 && c != 0 && length < BUFFER_SIZE - 1 {
-            unsafe letters[0] = CChar(truncatingIfNeeded: c)
-            unsafe length = 1
+        if c != 10 && c != 0 && length < BUFFER_SIZE - 1 {
+            letters[0] = CChar(truncatingIfNeeded: c)
+            length = 1
         }
     } else {
-        unsafe letters[length] = CChar(truncatingIfNeeded: c)
-        unsafe length += 1
+        letters[length] = CChar(truncatingIfNeeded: c)
+        length += 1
     }
     return c
 }
 
 @_cdecl("strlen")
 func strlen(_ str: UnsafePointer<CChar>?) -> Int {
-    guard let str = unsafe str else { return 0 }
+    guard let str = str else { return 0 }
     var count = 0
-    var pointer = unsafe str
-    while unsafe pointer.pointee != 0 {
+    var pointer = str
+    while pointer.pointee != 0 {
         count += 1
-        unsafe pointer = unsafe pointer.advanced(by: 1)
+        pointer = pointer.advanced(by: 1)
     }
     return count
 }

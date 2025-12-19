@@ -18,6 +18,13 @@ func callback(_ pointer: UnsafeMutableRawPointer?) {
     context.callback()
 }
 
+nonisolated(unsafe) var index: Int = 0 {
+    didSet {
+        let element = Document.global.getElementById(id: JSString("counter"))
+        element.innerHTML = JSString(string: String(index))
+    }
+}
+
 @main
 struct Application {
     func run() throws {
@@ -27,20 +34,65 @@ struct Application {
     }
     
     func html() {
+        text()
+        canvas()
+        counter()
+    }
+    
+    func text() {
         let body = Document.global.body
+        
         let h1 = Document.global.createElement(name: JSString("h1"))
         body.append(child: h1)
         h1.innerHTML = JSString("Hello, World!")
+    }
+    
+    func canvas() {
+        let body = Document.global.body
+        
+        let canvas = Document.global.createElement(name: JSString("canvas"))
+        canvas.width = 500
+        canvas.height = 400
+        body.append(child: canvas)
+        let context = canvas.getContext(name: JSString("2d"))
+        context.fillStyle = JSString("#00ff00")
+        context.fillRect(x: 20, y: 20, width: 200, height: 100)
+        
+        context.strokeStyle = JSString("#ff0000")
+        context.lineWidth = 4
+        
+        context.beginPath()
+        context.moveTo(x: 80, y: 200)
+        context.lineTo(x: 160, y: 60)
+        context.lineTo(x: 240, y: 200)
+        context.closePath()
+        context.stroke()
+    }
+    
+    func counter() {
+        let body = Document.global.body
+        
+        button(label: "-1", {
+            index -= 1
+        })
+        
+        let h1 = Document.global.createElement(name: JSString("h4"))
+        h1.id = JSString("counter")
+        body.append(child: h1)
+        h1.innerHTML = JSString(string: String(index))
+        
+        button(label: "+1", {
+            index += 1
+        })
+    }
+    
+    func button(label: StaticString, _ closure: @escaping () -> Void) {
+        let body = Document.global.body
         
         let button = Document.global.createElement(name: JSString("button"))
         body.append(child: button)
-        button.innerHTML = JSString("click")
-        let closure = Callback {
-            print("click")
-            let h1 = Document.global.createElement(name: JSString("h4"))
-            body.append(child: h1)
-            h1.innerHTML = JSString("Hello, World!")
-        }
+        button.innerHTML = JSString(label)
+        let closure = Callback(closure)
         let pointer = Unmanaged.passRetained(closure).toOpaque()
         button.addEventListener(name: JSString("click"), callback: JSClosure(callback, pointer))
     }

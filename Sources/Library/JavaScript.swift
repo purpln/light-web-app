@@ -121,12 +121,21 @@ public struct JSString: Sendable, ~Copyable {
 }
 
 public extension JSString {
+    init(string: String) {
+        var string = string
+        self.ref = string.withUTF8({ buffer in
+            bridgeString(buffer.baseAddress!, buffer.count)
+        })
+    }
+}
+
+public extension JSString {
     init(_ string: StaticString) {
-        self.ref = unsafe bridgeString(string.utf8Start, string.utf8CodeUnitCount)
+        self.ref = bridgeString(string.utf8Start, string.utf8CodeUnitCount)
     }
     
     var string: StaticString {
-        unsafe StaticString(pointer: stringMemory(ref))
+        StaticString(pointer: stringMemory(ref))
     }
 }
 
@@ -153,7 +162,22 @@ public struct HTMLElement: ~Copyable {
         externref.addEventListener(self.ref, name.ref, callback.ref)
     }
     
-    public static let innerHTMLName = JSString("innerHTML")
+    public func getContext(name: borrowing JSString) -> Context {
+        Context(ref: externref.getContext(ref, name.ref))
+    }
+    
+    private static let idName = JSString("id")
+    
+    public var id: JSString {
+        get {
+            JSString(ref: getProperty(self.ref, Self.idName.ref))
+        }
+        nonmutating set {
+            setProperty(self.ref, Self.idName.ref, newValue.ref)
+        }
+    }
+    
+    private static let innerHTMLName = JSString("innerHTML")
     
     public var innerHTML: JSString {
         get {
@@ -163,14 +187,34 @@ public struct HTMLElement: ~Copyable {
             setProperty(self.ref, Self.innerHTMLName.ref, newValue.ref)
         }
     }
+    
+    private static let widthName = JSString("width")
+    
+    public var width: Int {
+        get {
+            getIntProperty(self.ref, Self.widthName.ref)
+        }
+        nonmutating set {
+            setIntProperty(self.ref, Self.widthName.ref, newValue)
+        }
+    }
+    
+    private static let heightName = JSString("height")
+    
+    public var height: Int {
+        get {
+            getIntProperty(self.ref, Self.heightName.ref)
+        }
+        nonmutating set {
+            setIntProperty(self.ref, Self.heightName.ref, newValue)
+        }
+    }
 }
 
 public struct Document: Sendable, ~Copyable {
     let object: JSObject
     
     public static let global = Document(object: JSObject(ref: getDocument()))
-    
-    public static let bodyName = JSString("body")
     
     public func getElementById(id: borrowing JSString) -> HTMLElement {
         HTMLElement(ref: externref.getElementById(id.ref))
@@ -180,7 +224,70 @@ public struct Document: Sendable, ~Copyable {
         HTMLElement(ref: externref.createElement(name.ref))
     }
     
+    private static let bodyName = JSString("body")
+    
     public var body: HTMLElement {
         HTMLElement(ref: getProperty(self.object.ref, Self.bodyName.ref))
+    }
+}
+
+public struct Context: Sendable, ~Copyable {
+    let ref: ExternRefIndex
+    
+    private static let fillStyleName = JSString("fillStyle")
+    
+    public var fillStyle: JSString {
+        get {
+            JSString(ref: getProperty(self.ref, Self.fillStyleName.ref))
+        }
+        nonmutating set {
+            setProperty(self.ref, Self.fillStyleName.ref, newValue.ref)
+        }
+    }
+    
+    private static let strokeStyleName = JSString("strokeStyle")
+    
+    public var strokeStyle: JSString {
+        get {
+            JSString(ref: getProperty(self.ref, Self.strokeStyleName.ref))
+        }
+        nonmutating set {
+            setProperty(self.ref, Self.strokeStyleName.ref, newValue.ref)
+        }
+    }
+    
+    private static let lineWidthName = JSString("lineWidth")
+    
+    public var lineWidth: Int {
+        get {
+            getIntProperty(self.ref, Self.lineWidthName.ref)
+        }
+        nonmutating set {
+            setIntProperty(self.ref, Self.lineWidthName.ref, newValue)
+        }
+    }
+    
+    public func fillRect(x: Int, y: Int, width: Int, height: Int) {
+        externref.fillRect(ref, x, y, width, height)
+    }
+    
+    public func beginPath() {
+        externref.beginPath(ref)
+    }
+    
+    public func closePath() {
+        externref.closePath(ref)
+    }
+    
+    public func moveTo(x: Int, y: Int) {
+        externref.moveTo(ref, x, y)
+    }
+    
+    public func lineTo(x: Int, y: Int) {
+        externref.lineTo(ref, x, y)
+    }
+    
+    public func stroke() {
+        externref.stroke(ref)
     }
 }

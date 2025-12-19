@@ -123,12 +123,40 @@ ExternRefIndex createElement(ExternRefIndex name) {
     return tableAppend(createElementJS(__builtin_wasm_table_get(table, name.index)));
 }
 
+ExternRefIndex getContext(ExternRefIndex self, ExternRefIndex name) {
+    return tableAppend(getContextJS(__builtin_wasm_table_get(table, self.index), __builtin_wasm_table_get(table, name.index)));
+}
+
 void appendChild(ExternRefIndex self, ExternRefIndex child) {
     appendChildJS(__builtin_wasm_table_get(table, self.index), __builtin_wasm_table_get(table, child.index));
 }
 
 void addEventListener(ExternRefIndex self, ExternRefIndex name, ExternRefIndex callback) {
     addEventListenerJS(__builtin_wasm_table_get(table, self.index), __builtin_wasm_table_get(table, name.index), __builtin_wasm_table_get(table, callback.index));
+}
+
+void fillRect(ExternRefIndex self, long x, long y, long width, long height) {
+    fillRectJS(__builtin_wasm_table_get(table, self.index), x, y, width, height);
+}
+
+void beginPath(ExternRefIndex self) {
+    beginPathJS(__builtin_wasm_table_get(table, self.index));
+}
+
+void closePath(ExternRefIndex self) {
+    closePathJS(__builtin_wasm_table_get(table, self.index));
+}
+
+void moveTo(ExternRefIndex self, long x, long y) {
+    moveToJS(__builtin_wasm_table_get(table, self.index), x, y);
+}
+
+void lineTo(ExternRefIndex self, long x, long y) {
+    lineToJS(__builtin_wasm_table_get(table, self.index), x, y);
+}
+
+void stroke(ExternRefIndex self) {
+    strokeJS(__builtin_wasm_table_get(table, self.index));
 }
 
 #endif
