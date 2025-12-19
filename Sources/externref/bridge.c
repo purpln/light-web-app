@@ -111,6 +111,10 @@ ExternRefIndex stringify(ExternRefIndex self) {
     return tableAppend(stringifyJS(__builtin_wasm_table_get(table, self.index)));
 }
 
+ExternRefIndex floatString(float self) {
+    return tableAppend(floatStringJS(self));
+}
+
 ExternRefIndex getDocument() {
     return tableAppend(getDocumentJS());
 }

@@ -18,10 +18,9 @@ func callback(_ pointer: UnsafeMutableRawPointer?) {
     context.callback()
 }
 
-nonisolated(unsafe) var index: Int = 0 {
+nonisolated(unsafe) var value: Float = 0 {
     didSet {
-        let element = Document.global.getElementById(id: JSString("counter"))
-        element.innerHTML = JSString(string: String(index))
+        Document.global.getElementById(id: JSString("counter")).innerHTML = JSString(value)
     }
 }
 
@@ -72,17 +71,17 @@ struct Application {
     func counter() {
         let body = Document.global.body
         
-        button(label: "-1", {
-            index -= 1
+        button(label: "-0.1", {
+            value -= 0.1
         })
         
         let h1 = Document.global.createElement(name: JSString("h4"))
         h1.id = JSString("counter")
         body.append(child: h1)
-        h1.innerHTML = JSString(string: String(index))
+        h1.innerHTMLInt = 0
         
-        button(label: "+1", {
-            index += 1
+        button(label: "+0.1", {
+            value += 0.1
         })
     }
     
@@ -110,8 +109,9 @@ struct Application {
         object["value"] = 1
         let array = JSArray()
         array[0] = JSString("0")
-        array.append(1.0)
-        array.append(2)
+        array.append(0.1)
+        array.append(1)
+        print(JSString(array[1] as Float).string)
         object["array"] = array
         let description = stringify(object)
         print(description.string)

@@ -121,11 +121,8 @@ public struct JSString: Sendable, ~Copyable {
 }
 
 public extension JSString {
-    init(string: String) {
-        var string = string
-        self.ref = string.withUTF8({ buffer in
-            bridgeString(buffer.baseAddress!, buffer.count)
-        })
+    init(_ float: Float) {
+        self.ref = floatString(float)
     }
 }
 
@@ -185,6 +182,15 @@ public struct HTMLElement: ~Copyable {
         }
         nonmutating set {
             setProperty(self.ref, Self.innerHTMLName.ref, newValue.ref)
+        }
+    }
+    
+    public var innerHTMLInt: Int {
+        get {
+            getIntProperty(self.ref, Self.innerHTMLName.ref)
+        }
+        nonmutating set {
+            setIntProperty(self.ref, Self.innerHTMLName.ref, newValue)
         }
     }
     

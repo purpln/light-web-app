@@ -11,8 +11,7 @@ function stringAsWasmMemory(string) {
     const bytes = encoder.encode(string + '\0');
     const address = instance.exports.malloc(bytes.length);
     
-    const memory = new Uint8Array(instance.exports.memory.buffer);
-    memory.set(bytes, address);
+    new Uint8Array(instance.exports.memory.buffer).set(bytes, address);
     
     return address;
 }
@@ -39,14 +38,15 @@ function indirect(index, address, parameters) {
 
 const imports = {
     js: {
-        emptyObject: () => { return {} },
+        emptyObject: () => ({}),
         emptyArray: () => [],
         arrayPush: (self, element) => self.push(element),
         bridgeString: (address, length) => wasmMemoryAsString(address, length),
         stringMemory: (string) => stringAsWasmMemory(string),
         getProperty: (self, name) => self[name],
         setProperty: (self, name, value) => { self[name] = value; },
-        stringify: (self) => JSON.stringify(self),
+        stringify: JSON.stringify,
+        floatString: (float) => float.toString(),
         callback: (index, address) => (...parameters) => indirect(index, address, parameters),
     },
     document: {

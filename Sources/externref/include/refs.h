@@ -42,7 +42,9 @@ float arrayGetFloat(ExternRefIndex self, long index);
 void arraySetFloat(ExternRefIndex self, long index, float element);
 
 ExternRefIndex callback(void (callback)(void *), void *data);
+
 ExternRefIndex stringify(ExternRefIndex self);
+ExternRefIndex floatString(float self);
 
 ExternRefIndex getDocument(void);
 ExternRefIndex getElementById(ExternRefIndex id);

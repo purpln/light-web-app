@@ -40,6 +40,7 @@ void setFloatPropertyJS(__externref_t self, __externref_t name, long val) WASM_I
 __externref_t callbackJS(void (callback)(void *), void *data) WASM_IMPORT("js", "callback");
 
 __externref_t stringifyJS(__externref_t self) WASM_IMPORT("js", "stringify");
+__externref_t floatStringJS(float self) WASM_IMPORT("js", "floatString");
 
 __externref_t getDocumentJS(void) WASM_IMPORT("document", "getDocument");
 
