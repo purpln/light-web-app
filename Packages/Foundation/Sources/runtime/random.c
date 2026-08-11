@@ -14,7 +14,7 @@ void arc4random_buf(void *buffer, size_t size) {
         value ^= value >> 15;
         value *= 0x735a2d97u;
         value ^= value >> 15;
-
+        
         for (size_t index = 0; index < sizeof(value) && size; ++index, --size)
             *bytes++ = (uint8_t)(value >> (index * 8));
     }

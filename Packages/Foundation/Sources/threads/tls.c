@@ -9,7 +9,7 @@ void *tls = NULL;
 __attribute__((constructor))
 void __init_tls(void) {
     if (tls) free(tls);
-
+    
     size_t tls_size  = __builtin_wasm_tls_size();
     size_t tls_align = __builtin_wasm_tls_align();
     tls = aligned_alloc(tls_align, tls_size);

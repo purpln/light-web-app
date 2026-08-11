@@ -113,10 +113,9 @@ int __pthread_create(pthread_t nullable * nonnull __restrict result,
 
 int __pthread_detach(pthread_t nonnull thread) {
     int state = THREAD_JOINABLE;
-    if (atomic_compare_exchange_strong(
-            &thread->state, &state, THREAD_DETACHED))
+    if (atomic_compare_exchange_strong(&thread->state, &state, THREAD_DETACHED))
         return 0;
-
+    
     if (state == THREAD_EXITED) {
         void *stack_pointer = thread->stack_pointer;
         void *tls_base = thread->tls_base;
@@ -137,13 +136,13 @@ void __pthread_exit(void* nullable result) {
     pthread_t self = __pthread_self();
     check_stack_guard(self);
     self->result = result;
-
+    
     int state = atomic_exchange(&self->state, THREAD_EXITED);
     if (state == THREAD_JOINABLE) {
         futex_wake(&self->state);
         return;
     }
-
+    
     if (state == THREAD_DETACHED) {
         void *stack_pointer = self->stack_pointer;
         void *tls_base = self->tls_base;
@@ -153,7 +152,7 @@ void __pthread_exit(void* nullable result) {
         free(tls_base);
         return;
     }
-
+    
     __builtin_trap();
 }
 
@@ -163,9 +162,9 @@ int __pthread_join(pthread_t nonnull thread, void* nullable * nullable result) {
         if (state == THREAD_DETACHED) return -1;
         futex_wait(&thread->state, state);
     }
-
+    
     if (result) *result = thread->result;
-
+    
     void *stack_pointer = thread->stack_pointer;
     void *tls_base = thread->tls_base;
     thread->tls_base = NULL;

@@ -65,7 +65,7 @@ static inline Region *region_after(Region *self, size_t len) {
 
 static inline int grow_heap_for_region(Region *region_end) {
     if (!region_end) return 0;
-
+    
     uintptr_t required = (uintptr_t)region_end;
     uintptr_t current = (uintptr_t)heap_end;
     if (required > current) {
@@ -78,10 +78,10 @@ static inline int grow_heap_for_region(Region *region_end) {
 
 static void *malloc_locked(size_t size) {
     if (size == 0) return NULL;
-
+    
     if (heap_end == NULL)
         heap_end = get_heap_end();
-
+    
     Region *prev = NULL;
     Region *curr = free_list;
     while (curr != NULL) {
@@ -95,11 +95,11 @@ static void *malloc_locked(size_t size) {
         prev = curr;
         curr = curr->next;
     }
-
+    
     Region *region_end = region_after(next, size);
     if (!grow_heap_for_region(region_end))
         return NULL;
-
+    
     void *result = &next->data;
     next->size = size;
     next = region_end;
@@ -108,10 +108,10 @@ static void *malloc_locked(size_t size) {
 
 static void free_locked(void *ptr) {
     if (ptr == NULL) return;
-
+    
     Region *region = region_for_ptr(ptr);
     Region *region_end = region_after(region, region->size);
-
+    
     if (region_end == next) {
         next = region;
     } else {
@@ -124,7 +124,7 @@ static void *aligned_alloc_locked(size_t alignment, size_t size) {
     if (size == 0) return NULL;
     if (alignment == 0) alignment = 1;
     if (alignment & (alignment - 1)) return NULL;
-
+    
     Region *prev = NULL;
     Region *curr = free_list;
     while (curr != NULL) {
@@ -139,10 +139,10 @@ static void *aligned_alloc_locked(size_t alignment, size_t size) {
         prev = curr;
         curr = curr->next;
     }
-
+    
     if (heap_end == NULL)
         heap_end = get_heap_end();
-
+    
     size_t offset = offsetof(Region, data);
     uintptr_t curr_data = (uintptr_t)next->data;
     if (curr_data > SIZE_MAX - (alignment - 1))
@@ -150,10 +150,10 @@ static void *aligned_alloc_locked(size_t alignment, size_t size) {
     uintptr_t aligned_data = __builtin_align_up(curr_data, alignment);
     Region *aligned_region = (Region *)(aligned_data - offset);
     Region *alloc_end = region_after(aligned_region, size);
-
+    
     if (!grow_heap_for_region(alloc_end))
         return NULL;
-
+    
     aligned_region->size = size;
     next = alloc_end;
     return &aligned_region->data;
@@ -178,7 +178,7 @@ noinline void *__calloc(size_t count, size_t size) {
     if (size != 0 && count > SIZE_MAX / size)
         return NULL;
     size_t total = count * size;
-
+    
     lock_heap();
     void *result = malloc_locked(total);
     if (result)
@@ -195,16 +195,16 @@ noinline void *__realloc(void *pointer, size_t new_size) {
         unlock_heap();
         return result;
     }
-
+    
     if (new_size == 0) {
         free_locked(pointer);
         unlock_heap();
         return NULL;
     }
-
+    
     Region *region = region_for_ptr(pointer);
     Region *region_end = region_after(region, region->size);
-
+    
     if (region_end == next) {
         Region *new_region_end = region_after(region, new_size);
         if (grow_heap_for_region(new_region_end)) {
@@ -214,7 +214,7 @@ noinline void *__realloc(void *pointer, size_t new_size) {
             return &region->data;
         }
     }
-
+    
     void *result = malloc_locked(new_size);
     if (result) {
         size_t copy_size = region->size < new_size ? region->size : new_size;

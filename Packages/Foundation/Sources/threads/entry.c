@@ -33,7 +33,7 @@ void __cxa_finalize(void *dso) {
                          (dso && exit_entries[index - 1].dso != dso)))
             --index;
         if (!index) break;
-
+        
         exit_entry entry = exit_entries[index - 1];
         exit_entries[index - 1] = (exit_entry){ 0 };
         while (exit_entry_count && !exit_entries[exit_entry_count - 1].function)
@@ -50,10 +50,10 @@ wasm_export("_start")
 void _start(void) {
     __wasm_call_ctors();
     pthread_self()->tid = 0;
-
+    
     char *argument = NULL;
     (void)__main_argc_argv(0, &argument);
-
+    
     __wasm_call_dtors();
 }
 
