@@ -79,7 +79,7 @@ async function instantiate(bytes) {
     try {
         memory = new WebAssembly.Memory({
             initial: 2,
-            maximum: 65536,
+            maximum: 0x10000, // 0x10000 - 4gb, 0x4000 - 1gb
             shared: true,
         });
         wasmModule = await WebAssembly.compile(bytes);
