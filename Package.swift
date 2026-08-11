@@ -2,35 +2,42 @@
 
 import PackageDescription
 
+#if WASM
+let linkerSettings: [LinkerSetting] = [
+    .unsafeFlags([
+        "-Xclang-linker", "-nostdlib",
+        "-Xlinker", "--allow-undefined-file=symbols", //symbols that linker lacks
+    ]),
+]
+#else
+let linkerSettings: [LinkerSetting] = []
+#endif
+
 let package = Package(name: "Application", products: [
     .executable(name: "Application", targets: ["Application"]),
 ], dependencies: [
-    .package(url: "https://github.com/swiftwasm/swift-dlmalloc.git", branch: "main"),
+    .package(path: "Packages/Foundation"),
+    .package(path: "Packages/JavaScript"),
 ], targets: [
     .executableTarget(name: "Application", dependencies: [
-        .product(name: "dlmalloc", package: "swift-dlmalloc"),
-        "Library",
-    ], swiftSettings: [
-        .unsafeFlags([
-            "-Xfrontend", "-disable-stack-protector", //minimal app misses some symbols
-        ]),
-    ], linkerSettings: [
-        .unsafeFlags([
-            "-Xclang-linker", "-mexec-model=command",
-            //"-Xclang-linker", "-mexec-model=reactor", //no _start entry
-            "-Xclang-linker", "-nostdlib",
-            //"-Xlinker", "--no-entry",
-            "-Xlinker", "--allow-undefined-file=symbols", //symbols that linker lacks
-            "-Xlinker", "--export-if-defined=__indirect_function_table",
-            "-Xlinker", "--export=malloc",
-            "-Xlinker", "--export=free",
-        ]),
-    ]),
-    .target(name: "externref"),
-    .target(name: "Foundation", dependencies: [
-        "externref",
-    ]),
-    .target(name: "Library", dependencies: [
-        "externref",
-    ]),
+        .product(name: "Foundation", package: "Foundation"),
+        .product(name: "JavaScript", package: "JavaScript"),
+    ], linkerSettings: linkerSettings),
 ])
+
+for target in package.targets {
+    guard target.type != .plugin else { continue }
+    target.swiftSettings = target.swiftSettings ?? []
+    target.swiftSettings? += [
+        //swift 6
+        .enableUpcomingFeature("StrictConcurrency"),
+        
+        //swift 7
+        .enableUpcomingFeature("ExistentialAny"),
+        .enableUpcomingFeature("InternalImportsByDefault"),
+        .enableUpcomingFeature("MemberImportVisibility"),
+        .enableUpcomingFeature("InferIsolatedConformances"),
+        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+        .enableUpcomingFeature("ImmutableWeakCaptures"),
+    ]
+}

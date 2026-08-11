@@ -11,9 +11,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef struct ExternRefIndex {
-    int index;
+    size_t index;
 } ExternRefIndex;
 
+void retainExternRef(ExternRefIndex ref);
+void releaseExternRef(ExternRefIndex ref);
 void freeExternRef(ExternRefIndex ref);
 
 ExternRefIndex bridgeString(const uint8_t *str, size_t bytes);
@@ -41,25 +43,22 @@ void arraySetInt(ExternRefIndex self, long index, long element);
 float arrayGetFloat(ExternRefIndex self, long index);
 void arraySetFloat(ExternRefIndex self, long index, float element);
 
-ExternRefIndex callback(void (callback)(void *), void *data);
-
 ExternRefIndex stringify(ExternRefIndex self);
-ExternRefIndex floatString(float self);
+ExternRefIndex callback(void (*function)(void *), void *data);
 
 ExternRefIndex getDocument(void);
 ExternRefIndex getElementById(ExternRefIndex id);
 ExternRefIndex createElement(ExternRefIndex name);
 ExternRefIndex getContext(ExternRefIndex self, ExternRefIndex name);
 void appendChild(ExternRefIndex self, ExternRefIndex child);
-void addEventListener(ExternRefIndex self, ExternRefIndex name, ExternRefIndex callback);
+void addEventListener(ExternRefIndex self, ExternRefIndex name,
+                      ExternRefIndex callback);
 void fillRect(ExternRefIndex self, long x, long y, long width, long height);
-
 void beginPath(ExternRefIndex self);
 void closePath(ExternRefIndex self);
 void moveTo(ExternRefIndex self, long x, long y);
 void lineTo(ExternRefIndex self, long x, long y);
 void stroke(ExternRefIndex self);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

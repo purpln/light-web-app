@@ -1,99 +1,105 @@
-let instance = null;
+import { createMainBridge } from './bridge.js';
 
-const decoder = new TextDecoder();
-const encoder = new TextEncoder();
+const threads = new Map();
+let nextThreadId = 1;
+let bridge = null;
+let memory = null;
+let wasmModule = null;
 
-function wasmMemoryAsString(address, length) {
-    return decoder.decode(instance.exports.memory.buffer.slice(address, address + length));
+function log(string) {
+    console.log(string.endsWith('\n') ? string.slice(0, -1) : string);
 }
 
-function stringAsWasmMemory(string) {
-    const bytes = encoder.encode(string + '\0');
-    const address = instance.exports.malloc(bytes.length);
-    
-    new Uint8Array(instance.exports.memory.buffer).set(bytes, address);
-    
-    return address;
-}
-
-function puts(address) {
-    const buffer = new Uint8Array(instance.exports.memory.buffer);
-    
-    let terminator = address;
-    while (terminator < buffer.length && buffer[terminator] !== 0) {
-        terminator++;
+function terminateThread(id) {
+    const thread = threads.get(id);
+    if (thread === undefined) {
+        log(`[thread ${id}] cannot terminate an unknown thread\n`);
+        return;
     }
-    
-    const slice = buffer.subarray(address, terminator);
-    const string = decoder.decode(buffer.subarray(address, terminator));
-    
-    console.log(string);
-    
-    return string ? string.length : 0;
+
+    thread.terminate();
+    threads.delete(id);
 }
 
-function indirect(index, address, parameters) {
-    instance.exports.__indirect_function_table.get(index)(address);
-}
-
-const imports = {
-    js: {
-        emptyObject: () => ({}),
-        emptyArray: () => [],
-        arrayPush: (self, element) => self.push(element),
-        bridgeString: (address, length) => wasmMemoryAsString(address, length),
-        stringMemory: (string) => stringAsWasmMemory(string),
-        getProperty: (self, name) => self[name],
-        setProperty: (self, name, value) => { self[name] = value; },
-        stringify: JSON.stringify,
-        floatString: (float) => float.toString(),
-        callback: (index, address) => (...parameters) => indirect(index, address, parameters),
-    },
-    document: {
-        getDocument: () => document,
-        getElementById: (id) => document.getElementById(id),
-        createElement: (name) => document.createElement(name),
-        getContext: (element, name) => element.getContext(name),
-        appendChild: (element, child) => element.appendChild(child),
-        addEventListener: (element, name, callback) => element.addEventListener(name, callback),
-        fillRect: (element, x, y, width, height) => element.fillRect(x, y, width, height),
-        beginPath: (element) => element.beginPath(),
-        closePath: (element) => element.closePath(),
-        moveTo: (element, x, y) => element.moveTo(x, y),
-        lineTo: (element, x, y) => element.lineTo(x, y),
-        stroke: (element) => element.stroke(),
-    },
-    env: {
-        puts: (address) => puts(address),
-    },
-}
-
-fetch("app.wasm")
-.then(response => {
-    if (!response.ok) {
-        throw new Error(`status: ${response.status}`);
+function handleWorkerMessage(id, event) {
+    switch (event.data.method) {
+    case 'log':
+        log(id === 0 ? event.data.string : `[thread ${id}] ${event.data.string}`);
+        break;
+    case 'spawn': {
+        const childId = spawnThread(event.data.argument);
+        Atomics.store(event.data.threadId, 0, childId);
+        Atomics.notify(event.data.threadId, 0);
+        break;
     }
-    return response.arrayBuffer();
-})
-.then(result => {
-    const bytes = new Uint8Array(result);
-    
-    WebAssembly.compile(bytes)
-    .then(module => {
-        WebAssembly.instantiate(module, imports)
-        .then(result => {
-            instance = result
-            
-            instance.exports._start();
-        })
-        .catch(error => {
-            console.error(`instantiate: ${error.toString()}`);
-        });
-    })
-    .catch(error => {
-        console.error(`compile: ${error.toString()}`);
+    case 'remote':
+        bridge.handle(id, event.data);
+        break;
+    case 'retain':
+        bridge.retain(event.data.reference);
+        break;
+    case 'release':
+        bridge.release(event.data.reference);
+        break;
+    case 'terminate':
+        terminateThread(id);
+        break;
+    default:
+        log(`[thread ${id}] unknown callback ${JSON.stringify(event.data)}\n`);
+    }
+}
+
+function startThread(id, argument) {
+    const thread = new Worker('worker.js', { name: `${id}`, type: 'module' });
+
+    thread.onerror = error => {
+        log(`[thread ${id}] onerror: ${error.toString()}\n`);
+    };
+    thread.onmessage = event => handleWorkerMessage(id, event);
+    thread.onmessageerror = error => {
+        log(`[thread ${id}] onmessageerror: ${error.toString()}\n`);
+    };
+
+    threads.set(id, thread);
+    thread.postMessage({
+        method: 'instantiate',
+        threadId: id,
+        argument,
+        module: wasmModule,
+        memory,
     });
-})
-.catch(error => {
-    console.error(`fetch: ${error.toString()}`);
-});
+    return id;
+}
+
+function spawnThread(argument) {
+    return startThread(nextThreadId++, argument);
+}
+
+async function instantiate(bytes) {
+    try {
+        memory = new WebAssembly.Memory({
+            initial: 2,
+            maximum: 65536,
+            shared: true,
+        });
+        wasmModule = await WebAssembly.compile(bytes);
+        bridge = createMainBridge(threads, memory, log);
+        startThread(0);
+    } catch (error) {
+        log(`${error.toString()}\n`);
+    }
+}
+
+function load(path) {
+    fetch(path)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`request failed with status ${response.status}`);
+            }
+            return response.arrayBuffer();
+        })
+        .then(instantiate)
+        .catch(error => log(`${error.toString()}\n`));
+}
+
+load('app.wasm');
